@@ -9,7 +9,7 @@ const server = express()
 
 // database
 let dbUrl = process.env.DATABASE_URL
-if(dbUrl === "undefined"){
+if (dbUrl === undefined){
     process.exit(1)
 }
 
@@ -29,7 +29,7 @@ server.use("/orderbook", orderbookRoute)
 
 // startup
 let port = process.env.PORT
-if (port === "undefined") {
+if (port === undefined) {
     port = 3000
 }
 

@@ -22,4 +22,4 @@ orderbookSchema.pre("save", function (next) {
     next()
 })
 
-module.exports = mongoose.model("Order", orderbookSchema)
+module.exports = mongoose.model("Orderbook", orderbookSchema)
