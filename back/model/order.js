@@ -1,17 +1,10 @@
 const mongoose = require("mongoose")
 
 const orderSchema = new mongoose.Schema({
-    id: {
-        type: Number,
-        required: true,
-        unique: true
-    },
     currencyPair: {
         type: String,
-        default: "BTCUSD",
-        set(value) {
-            return this.currencyPair;
-        },
+        required: true,
+        default: "BTCUSD"
     },
     type: {
         type: String,
@@ -22,25 +15,23 @@ const orderSchema = new mongoose.Schema({
         type: Number,
         required: true,
         min: 0
-    }, // 2 decimal points
+    },
     quantity: {
         type: Number,
         required: true,
         min: 0
-    }, // 2 decimal points
+    },
     filledQuantity: {
         type: Number,
         required: true,
         min: 0
-    }, // 2 decimal points
+    },
     status: {
         type: String,
         default: "OPEN",
         enum: ["OPEN", "CLOSED"]
     },
-    trades: [{
-        type: String
-    }], // list of objects type Trade
+    trades: [String],
     createdDateTime: {
         type: Date,
         default: new Date()

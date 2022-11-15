@@ -6,9 +6,14 @@ const Orderbook = require("../model/orderbook")
 // endpoints
 router.get("/", async (req, res) => {
     try {
-        const currentOrderbook = await Orderbook.find()
-        res.status(200).json(currentOrderbook)
-        // currentOrderbook[0] ?
+        const orderbooks = Orderbook.find()
+        let orderbook = new Orderbook()
+        if (orderbooks !== []) {
+            orderbook = orderbooks[0]
+        } else {
+            await orderbook.save()
+        }
+        res.status(200).json(orderbook)
     } catch (err) {
         res.status(404).json({
             message: err.message

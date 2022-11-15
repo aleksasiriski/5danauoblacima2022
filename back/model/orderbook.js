@@ -2,11 +2,29 @@ const mongoose = require("mongoose")
 
 const orderbookSchema = new mongoose.Schema({
     buyOrders: [{
-        type: String
-    }], // list of objects type Order, type Buy
+        price: {
+            type: Number,
+            required: true,
+            min: 0
+        },
+        quantity: {
+            type: Number,
+            required: true,
+            min: 0
+        }
+    }],
     sellOrders: [{
-        type: String
-    }], // list of objects type Order, type Sell
+        price: {
+            type: Number,
+            required: true,
+            min: 0
+        },
+        quantity: {
+            type: Number,
+            required: true,
+            min: 0
+        }
+    }],
     createdDateTime: {
         type: Date,
         default: new Date()
