@@ -1,0 +1,22 @@
+version: "3.9"
+services:
+  app:
+    image: ghcr.io/aleksasiriski/5danauoblacima2022
+    depends_on:
+      - db
+    environment:
+      - PORT=3000
+      - DATABASE_URL=mongodb://db/ordersdatabase
+    ports:
+      - "3000:3000"
+    volumes:
+      - app-vol-1:/usr/src/app:Z
+    restart: always
+  db:
+    image: mongo
+    volumes:
+      - db-vol-1:/data/db:Z
+    restart: always
+volumes:
+  app-vol-1:
+  db-vol-1:
