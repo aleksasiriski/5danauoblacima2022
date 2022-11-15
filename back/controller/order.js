@@ -52,6 +52,7 @@ router.post("/", async (req, res) => {
             price: price,
             quantity: quantity
         })
+        const savedOrder = await newOrder.save()
 
         const orderbooks = Orderbook.find()
         let orderbook = new Orderbook()
@@ -97,7 +98,7 @@ router.post("/", async (req, res) => {
 
         await orderbook.save()
 
-        res.status(201).json(newOrder)
+        res.status(201).json(savedOrder)
     } catch (err) {
         res.status(400).json({
             message: err.message
