@@ -6,11 +6,11 @@ const tradeSchema = new mongoose.Schema({
         unique: true
     },
     buyOrderId: {
-        type: String,
+        type: Number,
         required: true
     },
     sellOrderId: {
-        type: String,
+        type: Number,
         required: true
     },
     price: {
@@ -23,11 +23,7 @@ const tradeSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
-    createdDateTime: {
-        type: Date,
-        default: new Date()
-    },
-    updatedDateTime: {
+    timestamp: {
         type: Date,
         default: new Date()
     }
@@ -35,7 +31,6 @@ const tradeSchema = new mongoose.Schema({
 
 tradeSchema.pre("save", function (next) {
     this.id = this._id
-    this.updatedDateTime = new Date()
     next()
 })
 

@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 
 const orderSchema = new mongoose.Schema({
     id: {
-        type: String,
+        type: Number,
         required: true,
         unique: true
     },
@@ -43,10 +43,5 @@ const orderSchema = new mongoose.Schema({
         default: new Date()
     }
 }, {versionKey: false}, { collection: "orders" })
-
-orderSchema.pre("save", function (next) {
-    this.updatedDateTime = new Date()
-    next()
-})
 
 module.exports = mongoose.model("Order", orderSchema)

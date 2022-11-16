@@ -32,16 +32,11 @@ const orderbookSchema = new mongoose.Schema({
     createdDateTime: {
         type: Date,
         default: new Date()
-    },
-    updatedDateTime: {
-        type: Date,
-        default: new Date()
     }
 }, {versionKey: false}, { collection: "orderbooks" })
 
 orderbookSchema.pre("save", function (next) {
     this.id = this._id
-    this.updatedDateTime = new Date()
     next()
 })
 

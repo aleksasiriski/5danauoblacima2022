@@ -19,8 +19,20 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
     try {
-        let requestedOrder = await Order.findOne({"id": `${req.params.id}`}).lean()
+        const requestedOrder = await Order.findOne({"id": `${req.params.id}`}).lean()
         delete requestedOrder["_id"]
+        requestedOrder["price"] = Number(requestedOrder["price"].toFixed(2))
+        requestedOrder["quantity"] = Number(requestedOrder["quantity"].toFixed(2))
+        requestedOrder["filledQuantity"] = Number(requestedOrder["filledQuantity"].toFixed(2))
+        for (let key in requestedOrder["trades"]) {
+            let trade = requestedOrder["trades"][key]
+            trade = await Trade.findById(trade).lean()
+            delete trade["_id"]
+            trade["price"] = Number(trade["price"].toFixed(2))
+            trade["price"] = Number(trade["price"].toFixed(2))
+            trade["quantity"] = Number(trade["quantity"].toFixed(2))
+            requestedOrder["trades"][key] = trade
+        }
         res.status(200).json(requestedOrder)
     } catch (err) {
         res.status(404).json({
@@ -277,8 +289,20 @@ router.post("/", async (req, res) => {
         await checkExchange(newOrder)
         await refreshOrderbook()
 
-        let updatedOrder = await Order.findOne({id: newOrder.id}).lean()
+        const updatedOrder = await Order.findOne({id: newOrder.id}).lean()
         delete updatedOrder["_id"]
+        updatedOrder["price"] = Number(updatedOrder["price"].toFixed(2))
+        updatedOrder["quantity"] = Number(updatedOrder["quantity"].toFixed(2))
+        updatedOrder["filledQuantity"] = Number(updatedOrder["filledQuantity"].toFixed(2))
+        for (let key in updatedOrder["trades"]) {
+            let trade = updatedOrder["trades"][key]
+            trade = await Trade.findById(trade).lean()
+            delete trade["_id"]
+            trade["price"] = Number(trade["price"].toFixed(2))
+            trade["price"] = Number(trade["price"].toFixed(2))
+            trade["quantity"] = Number(trade["quantity"].toFixed(2))
+            updatedOrder["trades"][key] = trade
+        }
         res.status(201).json(updatedOrder)
     } catch (err) {
         res.status(400).json({
