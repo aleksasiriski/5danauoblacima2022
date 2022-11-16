@@ -39,15 +39,8 @@ const orderbookSchema = new mongoose.Schema({
     }
 }, { collection: "orderbooks" })
 
-orderbookSchema.set("toObject", {
-    transform: function (doc, ret) {
-        ret.id = ret._id
-        delete ret._id
-        delete ret.__v
-    }
-})
-
 orderbookSchema.pre("save", function (next) {
+    this.id = this._id
     this.updatedDateTime = new Date()
     next()
 })

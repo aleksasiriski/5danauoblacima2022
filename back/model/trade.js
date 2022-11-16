@@ -33,15 +33,8 @@ const tradeSchema = new mongoose.Schema({
     }
 }, { collection: "trades" })
 
-tradeSchema.set("toObject", {
-    transform: function (doc, ret) {
-        ret.id = ret._id
-        delete ret._id
-        delete ret.__v
-    }
-})
-
 tradeSchema.pre("save", function (next) {
+    this.id = this._id
     this.updatedDateTime = new Date()
     next()
 })

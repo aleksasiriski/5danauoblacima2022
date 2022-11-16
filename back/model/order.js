@@ -48,13 +48,6 @@ const orderSchema = new mongoose.Schema({
     }
 }, { collection: "orders" })
 
-orderSchema.set("toObject", {
-    transform: function (doc, ret) {
-      delete ret._id
-      delete ret.__v
-    }
-})
-
 orderSchema.pre("save", function (next) {
     this.updatedDateTime = new Date()
     next()
