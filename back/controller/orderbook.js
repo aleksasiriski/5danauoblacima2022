@@ -6,7 +6,8 @@ const Orderbook = require("../model/orderbook")
 // endpoints
 router.get("/", async (req, res) => {
     try {
-        const orderbooks = await Orderbook.find()
+        const orderbooks = await Orderbook.find().lean()
+        delete orderbooks[0]["_id"]
         res.status(200).json(orderbooks[0])
     } catch (err) {
         res.status(404).json({

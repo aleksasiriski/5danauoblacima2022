@@ -41,12 +41,8 @@ const orderSchema = new mongoose.Schema({
     createdDateTime: {
         type: Date,
         default: new Date()
-    },
-    updatedDateTime: {
-        type: Date,
-        default: new Date()
     }
-}, { collection: "orders" })
+}, {versionKey: false}, { collection: "orders" })
 
 orderSchema.pre("save", function (next) {
     this.updatedDateTime = new Date()

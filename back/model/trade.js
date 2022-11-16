@@ -31,7 +31,7 @@ const tradeSchema = new mongoose.Schema({
         type: Date,
         default: new Date()
     }
-}, { collection: "trades" })
+}, {versionKey: false}, { collection: "trades" })
 
 tradeSchema.pre("save", function (next) {
     this.id = this._id

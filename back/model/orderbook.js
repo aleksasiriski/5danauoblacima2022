@@ -37,7 +37,7 @@ const orderbookSchema = new mongoose.Schema({
         type: Date,
         default: new Date()
     }
-}, { collection: "orderbooks" })
+}, {versionKey: false}, { collection: "orderbooks" })
 
 orderbookSchema.pre("save", function (next) {
     this.id = this._id

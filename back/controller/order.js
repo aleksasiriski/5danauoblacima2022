@@ -19,7 +19,8 @@ router.get("/", async (req, res) => {
 
 router.get("/:id", async (req, res) => {
     try {
-        const requestedOrder = await Order.findOne({"id": `${req.params.id}`})
+        let requestedOrder = await Order.findOne({"id": `${req.params.id}`}).lean()
+        delete requestedOrder["_id"]
         res.status(200).json(requestedOrder)
     } catch (err) {
         res.status(404).json({
@@ -35,9 +36,6 @@ async function checkExchange(newOrder) {
         orders.sort((a, b) => {
             return (a.price == b.price) ? (a.createdDateTime > b.createdDateTime ? 1 : -1) : (a.price > b.price ? 1 : -1)
         })
-
-        console.log("BUY")
-        console.log(orders)
 
         let askedQuantity = newOrder.quantity
         for (let key in orders) {
@@ -105,9 +103,6 @@ async function checkExchange(newOrder) {
         orders.sort((a, b) => {
             return (a.price == b.price) ? (a.createdDateTime > b.createdDateTime ? 1 : -1) : (a.price < b.price ? 1 : -1)
         })
-
-        console.log("SELL")
-        console.log(orders)
 
         let askedQuantity = newOrder.quantity
         for (let key in orders) {
@@ -196,6 +191,7 @@ async function refreshOrderbook() {
 
             if (!done) {
                 buyOrders.push({
+                    _id: undefined,
                     price: order.price,
                     quantity: leftQuantity
                 })
@@ -217,6 +213,7 @@ async function refreshOrderbook() {
 
             if (!done) {
                 sellOrders.push({
+                    _id: undefined,
                     price: order.price,
                     quantity: leftQuantity
                 })
@@ -280,7 +277,8 @@ router.post("/", async (req, res) => {
         await checkExchange(newOrder)
         await refreshOrderbook()
 
-        const updatedOrder = await Order.findOne({id: newOrder.id})
+        let updatedOrder = await Order.findOne({id: newOrder.id}).lean()
+        delete updatedOrder["_id"]
         res.status(201).json(updatedOrder)
     } catch (err) {
         res.status(400).json({
