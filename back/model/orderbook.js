@@ -1,6 +1,10 @@
 const mongoose = require("mongoose")
 
 const orderbookSchema = new mongoose.Schema({
+    id: {
+        type: String,
+        unique: true
+    },
     buyOrders: [{
         price: {
             type: Number,
@@ -34,6 +38,14 @@ const orderbookSchema = new mongoose.Schema({
         default: new Date()
     }
 }, { collection: "orderbooks" })
+
+orderbookSchema.set("toObject", {
+    transform: function (doc, ret) {
+        ret.id = ret._id
+        delete ret._id
+        delete ret.__v
+    }
+})
 
 orderbookSchema.pre("save", function (next) {
     this.updatedDateTime = new Date()

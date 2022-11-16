@@ -1,6 +1,10 @@
 const mongoose = require("mongoose")
 
 const tradeSchema = new mongoose.Schema({
+    id: {
+        type: String,
+        unique: true
+    },
     buyOrderId: {
         type: String,
         required: true
@@ -28,6 +32,14 @@ const tradeSchema = new mongoose.Schema({
         default: new Date()
     }
 }, { collection: "trades" })
+
+tradeSchema.set("toObject", {
+    transform: function (doc, ret) {
+        ret.id = ret._id
+        delete ret._id
+        delete ret.__v
+    }
+})
 
 tradeSchema.pre("save", function (next) {
     this.updatedDateTime = new Date()

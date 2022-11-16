@@ -8,8 +8,7 @@ const Orderbook = require("../model/orderbook")
 // endpoints
 router.get("/:id", async (req, res) => {
     try {
-        const orderId = req.params.id
-        const requestedOrder = await Order.findById(orderId)
+        const requestedOrder = await Order.findOne({"id": `${req.params.id}`})
         res.status(200).json(requestedOrder)
     } catch (err) {
         res.status(404).json({
