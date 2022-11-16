@@ -204,18 +204,17 @@ router.post("/", async (req, res) => {
             quantity: quantity
         }).save()
 
-        let shouldRefreshOrderbook = false
+        let removeOrder = false
         if (newOrder.type === "BUY") {
-            shouldRefreshOrderbook = !(await checkBuyable(newOrder))
+            removeOrder = await checkBuyable(newOrder)
         } else if (newOrder.type === "SELL") {
-            shouldRefreshOrderbook = !(await checkSellable(newOrder))
+            removeOrder = await checkSellable(newOrder)
         }
 
-        if (shouldRefreshOrderbook) {
-            await refreshOrderbook()
-        } else {
+        if (removeOrder) {
             await newOrder.delete()
         }
+        refreshOrderbook()
         res.status(201).json(newOrder)
     } catch (err) {
         res.status(400).json({
