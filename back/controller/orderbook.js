@@ -7,7 +7,7 @@ const Orderbook = require("../model/orderbook")
 router.get("/", async (req, res) => {
     try {
         const orderbooks = await Orderbook.find()
-        res.status(200).json(orderbooks)
+        res.status(200).json(orderbooks[0])
     } catch (err) {
         res.status(404).json({
             message: err.message

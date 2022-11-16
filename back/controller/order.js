@@ -4,9 +4,6 @@ const router = express()
 const Order = require("../model/order")
 const Trade = require("../model/trade")
 const Orderbook = require("../model/orderbook")
-const methodOverride = require("method-override")
-
-router.use(methodOverride("_method"))
 
 // endpoints
 router.get("/", async (req, res) => {
@@ -31,154 +28,216 @@ router.get("/:id", async (req, res) => {
     }
 })
 
-async function checkBuyable(newOrder) {
-    let success = false
-    Order.find({orderStatus: "OPEN"}).lean().exec(await async function (err, orders) {
-        orders.sort((a, b) => {
-            return a.price == b.price ? a.createdDateTime < b.createdDateTime : a.price < b.price
-        })
-        let askedQuantity = newOrder.quantity
-        orders.forEach(async (order) => {
-            console.log(order)
-            if (order.type === "SELL" && order.orderStatus === "OPEN") {
-                if (order.price <= newOrder.price) {
-                    const leftQuantity = order.quantity - order.filledQuantity
-                    if (leftQuantity >= askedQuantity) {
-                        order.filledQuantity += askedQuantity
-                        if (order.filledQuantity == order.quantity) {
-                            order.orderStatus = "CLOSED"
-                        }
-                        let newTrade = await new Trade({
-                            buyOrderId: newOrder.id,
-                            sellOrderId: order.id,
-                            price: order.price,
-                            quantity: askedQuantity
-                        }).save()
-                        newOrder.trades.push(newTrade.id)
-                        order.trades.push(newTrade.id)
-                        await order.save()
-                        success = true
-                    } else {
-                        askedQuantity -= leftQuantity
-                        order.filledQuantity = order.quantity
-                        order.orderStatus = "CLOSED"
-                        let newTrade = await new Trade({
-                            buyOrderId: newOrder.id,
-                            sellOrderId: order.id,
-                            price: order.price,
-                            quantity: leftQuantity
-                        }).save()
-                        newOrder.trades.push(newTrade.id)
-                        order.trades.push(newTrade.id)
-                        await order.save()
-                    }
-                }
-            }
-        })
-    })
-    if (success) {
-        await newOrder.save()
-    }
-    return success
-}
+async function checkExchange(newOrder) {
+    if (newOrder.type == "BUY") {
 
-async function checkSellable(newOrder) {
-    Order.find({orderStatus: "OPEN"}).lean().exec(async function (err, orders) {
-        let success = false
+        const orders = await Order.find({orderStatus: "OPEN", type: "SELL"})
         orders.sort((a, b) => {
-            return a.price == b.price ? a.createdDateTime < b.createdDateTime : a.price > b.price
+            return (a.price == b.price) ? (a.createdDateTime > b.createdDateTime ? 1 : -1) : (a.price > b.price ? 1 : -1)
         })
+
+        console.log("BUY")
+        console.log(orders)
+
         let askedQuantity = newOrder.quantity
-        orders.forEach(async (order) => {
-            console.log(order)
-            if (order.type === "BUY" && order.orderStatus === "OPEN") {
-                if (order.price <= newOrder.price) {
-                    const leftQuantity = order.quantity - order.filledQuantity
-                    if (leftQuantity >= askedQuantity) {
-                        order.filledQuantity += askedQuantity
-                        if (order.filledQuantity == order.quantity) {
-                            order.orderStatus = "CLOSED"
-                        }
-                        let newTrade = await new Trade({
-                            buyOrderId: order.id,
-                            sellOrderId: newOrder.id,
-                            price: order.price,
-                            quantity: askedQuantity
-                        }).save()
-                        newOrder.trades.push(newTrade.id)
-                        order.trades.push(newTrade.id)
-                        success = true
-                    } else {
-                        askedQuantity -= leftQuantity
-                        order.filledQuantity = order.quantity
+        for (let key in orders) {
+
+            let order = orders[key]
+            if (order.price <= newOrder.price) {
+
+                let leftQuantity = order.quantity - order.filledQuantity
+
+                if (leftQuantity >= askedQuantity) {
+                    order.filledQuantity += askedQuantity
+
+                    if (order.filledQuantity == order.quantity) {
                         order.orderStatus = "CLOSED"
-                        let newTrade = await new Trade({
-                            buyOrderId: order.id,
-                            sellOrderId: newOrder.id,
-                            price: order.price,
-                            quantity: leftQuantity
-                        }).save()
-                        newOrder.trades.push(newTrade.id)
-                        order.trades.push(newTrade.id)
                     }
+
+                    newOrder.filledQuantity = newOrder.quantity
+                    newOrder.orderStatus = "CLOSED"
+
+                    let newTrade = await new Trade({
+                        buyOrderId: newOrder.id,
+                        sellOrderId: order.id,
+                        price: order.price,
+                        quantity: askedQuantity
+                    }).save()
+
+                    order.trades.push(newTrade.id)
+                    newOrder.trades.push(newTrade.id)
+                    
+                    await Order.findByIdAndUpdate(order._id, order)
+                    await Order.findByIdAndUpdate(newOrder._id, newOrder)
+
+                    return true
+                        
+                } else {
+
+                    askedQuantity -= leftQuantity
+                    newOrder.filledQuantity += leftQuantity
+
+                    order.filledQuantity = order.quantity
+                    order.orderStatus = "CLOSED"
+
+                    let newTrade = await new Trade({
+                        buyOrderId: newOrder.id,
+                        sellOrderId: order.id,
+                        price: order.price,
+                        quantity: leftQuantity
+                    }).save()
+
+                    newOrder.trades.push(newTrade.id)
+                    order.trades.push(newTrade.id)
+
+                    await Order.findByIdAndUpdate(order._id, order)
+                    await Order.findByIdAndUpdate(newOrder._id, newOrder)
+
                 }
+            } else {
+                return false
             }
-        })
-        if (success) {
-            await orders.save()
-            await newOrder.save()
         }
-        return success
-    })
+
+    } else if (newOrder.type == "SELL") {
+
+        const orders = await Order.find({orderStatus: "OPEN", type: "BUY"})
+        orders.sort((a, b) => {
+            return (a.price == b.price) ? (a.createdDateTime > b.createdDateTime ? 1 : -1) : (a.price < b.price ? 1 : -1)
+        })
+
+        console.log("SELL")
+        console.log(orders)
+
+        let askedQuantity = newOrder.quantity
+        for (let key in orders) {
+
+            let order = orders[key]
+            if (order.price >= newOrder.price) {
+
+                let leftQuantity = order.quantity - order.filledQuantity
+
+                if (leftQuantity >= askedQuantity) {
+                    order.filledQuantity += askedQuantity
+
+                    if (order.filledQuantity == order.quantity) {
+                        order.orderStatus = "CLOSED"
+                    }
+        
+                    newOrder.filledQuantity = newOrder.quantity
+                    newOrder.orderStatus = "CLOSED"
+
+                    let newTrade = await new Trade({
+                        buyOrderId: order.id,
+                        sellOrderId: newOrder.id,
+                        price: order.price,
+                        quantity: askedQuantity
+                    }).save()
+
+                    order.trades.push(newTrade.id)
+                    newOrder.trades.push(newTrade.id)
+                    
+                    await Order.findByIdAndUpdate(order._id, order)
+                    await Order.findByIdAndUpdate(newOrder._id, newOrder)
+
+                    return true
+                        
+                } else {
+
+                    askedQuantity -= leftQuantity
+
+                    order.filledQuantity = order.quantity
+                    order.orderStatus = "CLOSED"
+
+                    let newTrade = await new Trade({
+                        buyOrderId: order.id,
+                        sellOrderId: newOrder.id,
+                        price: order.price,
+                        quantity: leftQuantity
+                    }).save()
+
+                    newOrder.trades.push(newTrade.id)
+                    order.trades.push(newTrade.id)
+
+                    await Order.findByIdAndUpdate(order._id, order)
+                    await Order.findByIdAndUpdate(newOrder._id, newOrder)
+
+                }
+            } else {
+                return false
+            }
+        }
+    }
 }
 
 async function refreshOrderbook() {
     var buyOrders = []
     var sellOrders = []
-    Order.find({orderStatus: "OPEN"}).lean().exec(async function (err, orders) {
-        orders.forEach((order) => {
-            if (order.type == "BUY") {
-                let done = false
-                buyOrders.forEach((buyOrder) => {
-                    if (!done && buyOrder.price == order.price) {
-                        buyOrder.quantity += order.quantity
-                        done = true
-                    }
-                })
-                if (!done) {
-                    buyOrders.push({
-                        price: order.price,
-                        quantity: order.quantity
-                    })
+    const orders = await Order.find({orderStatus: "OPEN"})
+
+    for (let key in orders) {
+        
+        let order = orders[key]
+
+        let leftQuantity = order.quantity - order.filledQuantity
+        if (order.type == "BUY") {
+
+            let done = false
+            for (let key in buyOrders) {
+                let buyOrder = buyOrders[key]
+
+                if (buyOrder.price == order.price) {
+                    buyOrder.quantity += leftQuantity
+                    done = true
+                    break
                 }
-                buyOrders.sort((a, b) => {
-                    return a.price > b.price ? 1 : -1
-                })
-            } else if (order.type == "SELL") {
-                let done = false
-                sellOrders.forEach((sellOrder) => {
-                    if (!done && sellOrder.price == order.price) {
-                        sellOrder.quantity += order.quantity
-                        done = true
-                    }
-                })
-                if (!done) {
-                    sellOrders.push({
-                        price: order.price,
-                        quantity: order.quantity
-                    })
-                }
-                sellOrders.sort((a, b) => {
-                    return a.price > b.price ? 1 : -1
-                }).reverse()
+                
             }
-        })
-        await Orderbook.deleteMany({})
-        await new Orderbook({
-            buyOrders: buyOrders,
-            sellOrders: sellOrders
-        }).save()
+
+            if (!done) {
+                buyOrders.push({
+                    price: order.price,
+                    quantity: leftQuantity
+                })
+            }
+
+        } else if (order.type == "SELL") {
+
+            let done = false
+            for (let key in sellOrders) {
+                let sellOrder = sellOrders[key]
+
+                if (sellOrder.price == order.price) {
+                    sellOrder.quantity += leftQuantity
+                    done = true
+                    break
+                }
+                
+            }
+
+            if (!done) {
+                sellOrders.push({
+                    price: order.price,
+                    quantity: leftQuantity
+                })
+            }
+
+        }
+    }
+
+    buyOrders.sort((a, b) => {
+        return a.price < b.price ? 1 : -1
     })
+    sellOrders.sort((a, b) => {
+        return a.price > b.price ? 1 : -1
+    })
+
+    await Orderbook.deleteMany({})
+    await new Orderbook({
+        buyOrders: buyOrders,
+        sellOrders: sellOrders
+    }).save()
+    
 }
 
 router.post("/", async (req, res) => {
@@ -218,18 +277,11 @@ router.post("/", async (req, res) => {
             quantity: quantity
         }).save()
 
-        let removeOrder = false
-        if (newOrder.type == "BUY") {
-            removeOrder = await checkBuyable(newOrder)
-        } else if (newOrder.type == "SELL") {
-            removeOrder = await checkSellable(newOrder)
-        }
-
-        if (removeOrder) {
-            await newOrder.delete()
-        }
+        await checkExchange(newOrder)
         await refreshOrderbook()
-        res.status(201).json(newOrder)
+
+        const updatedOrder = await Order.findOne({id: newOrder.id})
+        res.status(201).json(updatedOrder)
     } catch (err) {
         res.status(400).json({
             message: err.message
@@ -241,6 +293,7 @@ router.delete("/all", async (req, res) => {
     try {
         await Order.deleteMany({})
         await Trade.deleteMany({})
+        await Orderbook.deleteMany({})
         res.status(200)
     } catch(err) {
         res.status(403).json({
