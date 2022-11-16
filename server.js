@@ -8,8 +8,8 @@ const express = require("express")
 const server = express()
 
 // database
-let dbUrl = process.env.DATABASE_URL
-if (dbUrl === undefined){
+const dbUrl = process.env.DATABASE_URL
+if (dbUrl == undefined){
     process.exit(1)
 }
 
