@@ -62,7 +62,9 @@ async function checkBuyable(newOrder) {
             }
         }
     }
-    await newOrder.save()
+    if (success) {
+        await newOrder.save()
+    }
     return success
 }
 
@@ -110,7 +112,9 @@ async function checkSellable(newOrder) {
             }
         }
     }
-    await newOrder.save()
+    if (success) {
+        await newOrder.save()
+    }
     return success
 }
 
