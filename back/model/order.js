@@ -24,9 +24,10 @@ const orderSchema = new mongoose.Schema({
     filledQuantity: {
         type: Number,
         required: true,
+        default: 0,
         min: 0
     },
-    status: {
+    orderStatus: {
         type: String,
         default: "OPEN",
         enum: ["OPEN", "CLOSED"]
